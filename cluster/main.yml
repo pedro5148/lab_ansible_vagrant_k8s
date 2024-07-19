@@ -31,15 +31,15 @@
   roles:
   - {role: join-workers, tags: ["join-workers-role"] }
 
-# - hosts: master
-#   become: yes
-#   user: root
-#   roles:
-#   - { role: install-helm, tags: ["install-helm-role"] }
+- hosts: master
+  become: yes
+  user: root
+  roles:
+  - { role: install-helm, tags: ["install-helm-role"] }
 
-# - hosts: master
-#   become: yes
-#   user: root
-#   roles:
-#   - { role: install-monit-tools, tags: ["install-monit-tools-role"] }
+- hosts: master
+  become: yes
+  user: root
+  roles:
+  - { role: install-monit-tools, tags: ["install-monit-tools-role"] }
  

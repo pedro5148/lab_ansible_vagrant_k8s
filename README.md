@@ -43,9 +43,13 @@ host_update_script += <<-ENTRY
   ENTRY
 ```
 ### Ansible (2.17.1)
-Provisionando cada task
+Provisionando cada playbook
 ```bash
 ansible-playbook -i hosts main.yml
+```
+Para executar tarefas especificas do playbook, utilize as tags
+```bash
+ansible-playbook -i hosts main.yml --tags "install-helm-role,install-monit-tools-role"
 ```
 
 ## License

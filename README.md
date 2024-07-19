@@ -1,12 +1,12 @@
-# Cluster Ansible para estudos
+# Cluster Vagrant + Ansible para estudos
 
-Projeto de um cluster local para estudos do Ansible, utilizando Virtualbox e Vagrant para provisionar de maquinas virtuais.
+Para voce que, assim como eu nao pode pagar para usar a AWS entre outros provedores de Cloud, este projeto cria um cluster local para estudos do Ansible, utilizando Virtualbox e Vagrant para provisionar de maquinas virtuais.
 
 ## Fases
 
 ```
- - Provisioning => Criando as instancias para os estudos.
- - Install_k8s => Criação de um cluster Kubernetes
+ - Provisioning => Criando as instancias para os estudos e armazenas os IP num arquivo hosts para uso do Ansible.
+ - Cluster => Criação de um cluster Kubernetes e Prometheus Operator
  - Deploy_app => Deploy de uma aplicação no cluster
 ```
 
@@ -19,40 +19,33 @@ machines = {
   "worker02" => {"memory" => "2048", "cpu" => "2", "ip" => "122", "image" => "ubuntu/jammy64"},
 }
 ```
-A porção de rede(Classe C) e o adaptador de rede em uso, são obtidos para serem utilizados pelas VM's
+A porção de rede(Classe C), o adaptador de rede em uso e o gateway padrao, são obtidos para serem utilizados pelas VM's
 ```bash
 $REDE=`ip r | awk '/^default/ {printf "%s", $3; exit 0}' | cut -d '.' -f 1-3 | awk '{printf "%s.", $0}'`
 $NIC=`ip r | awk '/^default/ {printf "%s", $5; exit 0}'`
+$DEFAULT_GW=`ip r | awk '/^default/ {printf "%s", $3; exit 0}'`
 ```
-Para o provisionamento do Ansible, é necessário informar no arquivo `hosts` o nome das maquinas, tendo em vista que o Vagrant usa o nome das VM's ao invés do IP, portanto é necessário informar no arquivo `/etc/hosts` o ip e o nome das VM's, o script abaixo faz essa inserção no momento da inicialização do cluster com o comando `vagrant up`
+Para o provisionamento do Ansible, é necessário informar no arquivo `/etc/hosts` o ip e o hostname das maquinas, o trecho abaixo faz essa inserção no momento da inicialização do cluster com o comando `vagrant up`
 ```bash
-machines.each do |name, conf|
-  ip = "#{$REDE}#{conf["ip"]}"
-  host_entry = "#{ip}\t#{name}"
-  host_update_script += <<-ENTRY
-    if ! grep -q "#{ip}" /etc/hosts; then
+host_update_script += <<-ENTRY
+    if ! egrep -q "#{ip}.*#{name}" /etc/hosts; then
       echo "#{host_entry}" | sudo tee -a /etc/hosts
     else
       echo "Entrada #{host_entry} já existe no /etc/hosts"
     fi
+
+    if ! grep -q "#{ip}" #{inventario}; then
+      echo "#{ip}" | tee -a #{inventario}
+      echo "\n"
+    else
+      echo "Entrada #{ip} já existe no #{inventario}"
+    fi
   ENTRY
-end
-
-host_update_script += <<-SCRIPT
-  } > /dev/null
-SCRIPT
-
-File.write('/tmp/update_hosts.sh', host_update_script)
-system('bash /tmp/update_hosts.sh')
 ```
-### Ansible (2.16.8)
-Para provisionar o cluster, no Vagrantfile é adicionado as linhas abaixo para dizer ao Vagrant onde esta o playbook e o arquivo hosts provisionar nas VM's
+### Ansible (2.17.1)
+Provisionando cada task
 ```bash
-config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "$YOUR_PATH/cluster-k8s/provisioning/main.yml"
-    ansible.compatibility_mode = "2.0"
-    ansible.inventory_path = "$YOUR_PATH/cluster-k8s/provisioning/hosts"
-end
+ansible-playbook -i hosts main.yml
 ```
 
 ## License

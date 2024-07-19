@@ -1,0 +1,59 @@
+# - name: Baixa a chave GPG do Kubernetes 
+#   get_url:
+#     url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+#     dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# - name: Adiciona o repositório Kubernetes
+#   copy:
+#     dest: /etc/apt/sources.list.d/kubernetes.list
+#     content: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /'
+
+# - name: Baixa e dearmazenha a chave GPG do Kubernetes
+#   shell: |
+#     curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# - name: Baixa a chave GPG do Kubernetes
+#   get_url:
+#     url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+#     dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# - name: Dearmora a chave GPG do Kubernetes
+#   command: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Adicionando a chave GPG do Kubernetes...
+  shell: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Adiciona o repositório Kubernetes
+  shell: |
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+- name: Atualiza a lista de pacotes
+  apt:
+    update_cache: yes
+
+- name: Instalando os pacotes kubeadm, kubelet e kubectl...
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Ativa e inicia o serviço kubelet
+  systemd:
+    name: kubelet
+    state: started
+    enabled: yes
+
+- name: Verifica o status do serviço kubelet
+  command: systemctl status kubelet
+  register: kubelet_status
+  failed_when: "'active (running)' not in kubelet_status.stdout"
+  ignore_errors: yes
+
+- name: Exibe o status do serviço kubelet
+  debug:
+    var: kubelet_status.stdout

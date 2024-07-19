@@ -1,0 +1,7 @@
+---
+# tasks file for install-base
+- name: Task Docker install...
+  include_tasks: install-docker.yml
+
+- name: Task K8s install...
+  include_tasks: install-k8s.yml

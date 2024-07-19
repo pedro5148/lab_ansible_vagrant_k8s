@@ -1,0 +1,4 @@
+---
+# tasks file for deploy-app-v2
+ - name: Task Deploy app v2...
+   include_tasks: deploy-app-v2.yml

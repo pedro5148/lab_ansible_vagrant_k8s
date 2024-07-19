@@ -1,0 +1,6 @@
+---
+# vars file for create-cluster
+ansible_python_interpreter: /usr/bin/python3.10
+default_url_weavenet: "https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml"
+k8s_token_command: "kubeadm token list | cut -d ' ' -f1  | sed -n '2p'"
+k8s_ca_hash_command: "openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"

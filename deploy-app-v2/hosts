@@ -1,0 +1,9 @@
+[master]
+192.168.15.21
+
+[worker]
+192.168.15.22
+
+[worker:vars]
+K8S_MASTER_NODE_IP=192.168.15.21
+K8S_API_SECURE_PORT=6443

@@ -1,0 +1,4 @@
+---
+# tasks file for join-workers
+- name: Task join workers...
+  include_tasks: install-workers.yml

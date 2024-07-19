@@ -1,0 +1,4 @@
+---
+# tasks file for deploy-app
+- name: Task Deploy app...
+  include_tasks: deploy-app.yml

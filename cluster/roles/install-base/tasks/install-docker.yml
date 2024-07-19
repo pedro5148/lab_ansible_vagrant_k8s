@@ -1,0 +1,110 @@
+# - name: Cria o diretório /etc/apt/keyrings com as permissões corretas
+#   file:
+#     path: /etc/apt/keyrings
+#     state: directory
+#     mode: '0755' 
+
+# - name: Baixa a chave GPG do Docker
+#   get_url:
+#     url: https://download.docker.com/linux/ubuntu/gpg
+#     dest: /etc/apt/keyrings/docker.asc
+
+# - name: Adiciona o repositório Docker
+#   apt_repository:
+#     repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+#     state: present
+
+- name: Baixa a chave GPG do Docker
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+
+- name: Adiciona o repositório Docker
+  shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+
+- name: Atualiza a lista de pacotes
+  apt:
+    update_cache: yes
+
+- name: Instala o containerd.io
+  apt:
+    name: containerd.io
+    state: present
+
+# - name: Cria o diretório /etc/containerd
+#   file:
+#     path: /etc/containerd
+#     state: directory
+
+- name: Gera o arquivo de configuração do containerd
+  command: containerd config default
+  register: containerd_config
+
+- name: Salva a configuração padrão do containerd
+  copy:
+    dest: /etc/containerd/config.toml
+    content: "{{ containerd_config.stdout }}"
+
+- name: Ajusta a configuração SystemdCgroup para true
+  lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: '^(\s*SystemdCgroup\s*=\s*)false'
+    line: '\1true'
+    backrefs: yes
+
+- name: Reinicia o serviço containerd
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: yes
+
+- name: Verifica o status do serviço containerd
+  command: systemctl status containerd
+  register: containerd_status
+  failed_when: "'active (running)' not in containerd_status.stdout"
+  ignore_errors: yes
+
+- name: Exibe o status do serviço containerd
+  debug:
+    var: containerd_status.stdout
+
+# - name: Remove entradas de swap do /etc/fstab
+#   lineinfile:
+#     path: /etc/fstab
+#     regexp: 'swap'
+#     state: absent
+
+# - name: Desativa a swap 
+#   command: swapoff -a
+
+- name: Cria o arquivo de configuração sysctl para Kubernetes
+  copy:
+    dest: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+
+- name: Aplica as configurações sysctl
+  command: sysctl --system
+
+- name: Cria o arquivo de configuração de módulos para Kubernetes
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      br_netfilter
+      ip_vs_rr
+      ip_vs_wrr
+      ip_vs_sh
+      nf_conntrack_ipv4
+      ip_vs
+
+- name: Carrega os módulos listados em /etc/modules-load.d/k8s.conf
+  #command: modprobe -a br_netfilter ip_vs_rr ip_vs_wrr ip_vs_sh nf_conntrack_ipv4 ip_vs
+  command: modprobe overlay && modprobe br_netfilter
+
+# - name: Reinicia a máquina
+#   reboot:
+#     reboot_timeout: 120
+#   run_once: true

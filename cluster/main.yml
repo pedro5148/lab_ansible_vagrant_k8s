@@ -1,0 +1,45 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  user: vagrant
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.10
+  pre_tasks:
+  - name: '[Pre task] Atualizando repositorio...'
+    raw: 'apt update'
+  - name: '[Pre task] Instalando programas essenciais...'
+    raw: 'apt install curl \
+                      wget \
+                      apt-transport-https \
+                      software-properties-common \
+                      gnupg2 \
+                      gnupg \
+                      ca-certificates \
+                      lsb-release -y' 
+  roles:
+  - { role: install-base, tags: ["install-base-role"] }
+
+- hosts: master
+  become: true
+  user: root
+  roles:
+  - { role: create-cluster, tags: ["create-cluster-role"] }
+
+- hosts: worker
+  become: true
+  user: root
+  roles:
+  - {role: join-workers, tags: ["join-workers-role"] }
+
+# - hosts: master
+#   become: yes
+#   user: root
+#   roles:
+#   - { role: install-helm, tags: ["install-helm-role"] }
+
+# - hosts: master
+#   become: yes
+#   user: root
+#   roles:
+#   - { role: install-monit-tools, tags: ["install-monit-tools-role"] }
+ 

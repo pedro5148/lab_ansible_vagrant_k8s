@@ -1,0 +1,7 @@
+- hosts: master
+  become: yes
+  #user: ubuntu
+  vars:
+    ansible_become_pass: q1w2e3r4
+  roles:
+  - { role: deploy-app-v2, tags: ["deploy_app_v2_role"] }

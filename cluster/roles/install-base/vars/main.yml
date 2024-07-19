@@ -1,0 +1,3 @@
+---
+# vars file for install-base
+ansible_python_interpreter: /usr/bin/python3.10

@@ -1,0 +1,11 @@
+---
+# vars file for deploy-app-v2
+ansible_python_interpreter: /usr/bin/python3.10
+
+numeros_replicas_v1: 1
+numeros_replicas_v2: 10
+version_v1: 1.0.0
+version_v2: 2.0.0
+prometheus_scrape: "true"
+prometheus_port: 32111
+nginx_port: 80

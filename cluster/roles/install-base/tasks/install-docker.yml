@@ -53,17 +53,18 @@
     line: '\1true'
     backrefs: yes
 
-- name: Reinicia o serviço containerd
-  systemd:
-    name: containerd
-    state: restarted
-    enabled: yes
+# - name: Reinicia o serviço containerd --> Substituido por Handlers
+#   systemd:
+#     name: containerd
+#     state: restarted
+#     enabled: yes
 
 - name: Verifica o status do serviço containerd
   command: systemctl status containerd
   register: containerd_status
   failed_when: "'active (running)' not in containerd_status.stdout"
   ignore_errors: yes
+  notify: Restart Docker
 
 - name: Exibe o status do serviço containerd
   debug:

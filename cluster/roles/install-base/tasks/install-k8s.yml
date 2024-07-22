@@ -41,12 +41,13 @@
     - kubelet
     - kubeadm
     - kubectl
+  notify: Enable kubelet
 
-- name: Ativa e inicia o serviço kubelet
-  systemd:
-    name: kubelet
-    state: started
-    enabled: yes
+# - name: Ativa e inicia o serviço kubelet --> Substituido por handlers
+#   systemd:
+#     name: kubelet
+#     state: started
+#     enabled: yes
 
 - name: Verifica o status do serviço kubelet
   command: systemctl status kubelet

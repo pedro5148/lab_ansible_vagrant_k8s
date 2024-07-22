@@ -1,2 +1,11 @@
 ---
 # handlers file for install-base
+- name: Restart Docker
+  service:
+    name: containerd
+    state: restarted
+
+- name: Enable kubelet 
+  service:
+    name: kubelet
+    state: started
